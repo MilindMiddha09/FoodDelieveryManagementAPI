@@ -25,8 +25,8 @@ namespace FoodDelieveryManagementAPI.Controllers
         {
             var adminList = _adminBusiness.GetAdminList();
 
-            if (adminList == null)
-                return NotFound();
+            if (adminList.Count == 0)
+                return NotFound("No admin exists..");
 
             return Ok(adminList);
         }

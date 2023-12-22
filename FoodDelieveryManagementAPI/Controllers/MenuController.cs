@@ -29,8 +29,14 @@ namespace FoodDelieveryManagementAPI.Controllers
             
             var userId=User.Identity.GetUserId();
 
-            _menuProductBusiness.UpdateMenu(product, userId);
-
+            try
+            {
+                _menuProductBusiness.UpdateMenu(product, userId);
+            }
+            catch
+            {
+                return BadRequest("Log in first to update menu");
+            }
             return StatusCode(StatusCodes.Status201Created);
         }
     }

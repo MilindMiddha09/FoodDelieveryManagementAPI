@@ -63,12 +63,12 @@ namespace FoodDelieveryManagementAPI.Controllers
         [HttpGet]
         public IActionResult GetRestaurantMenu(int id)
         {
-            var Menu = _restaurantBusiness.GetRestaurantMenu(id);
+            var menu = _restaurantBusiness.GetRestaurantMenu(id);
 
-            if (Menu.Count == 0)
+            if (menu.Count == 0)
                 return BadRequest();
 
-            return Ok(Menu);
+            return Ok(menu);
         }
 
         
@@ -90,9 +90,9 @@ namespace FoodDelieveryManagementAPI.Controllers
             var userId = User.Identity.GetUserId();
 
             var menu = _restaurantBusiness.GetMenu(userId);
-
+            
             if(menu.Count==0)
-                return BadRequest();
+                return BadRequest("No menu exists...");
 
             return Ok(menu);
         }

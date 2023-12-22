@@ -69,7 +69,7 @@ namespace FoodDelieveryManagementAPI.Business
 
         public List<MenuProduct> GetRestaurantMenu(int id)
         {
-            return _dbContext.MenuProducts.ToList().FindAll(rest=>rest.Id == id);
+            return _dbContext.MenuProducts.ToList().FindAll(rest=>rest.RestaurantId == id);
         }
 
         public AppUser GetRestaurantDetailsById(int id)
@@ -79,9 +79,10 @@ namespace FoodDelieveryManagementAPI.Business
 
         public List<MenuProduct> GetMenu(string userId)
         {
-            var restaurantId = _dbContext.UserDetails.FirstOrDefault(user => user.IdentityUser.Equals(userId)).ID;
+            var restaurantId = _dbContext.UserDetails.FirstOrDefault(user => user.IdentityUserId.Equals(userId)).ID;
 
-            return _dbContext.MenuProducts.ToList().FindAll(rest => rest.RestaurantId == restaurantId);
+            var menu =  _dbContext.MenuProducts.ToList().FindAll(rest => rest.RestaurantId == restaurantId);
+            return menu;
         }
 
         public void Update(JsonPatchDocument<AppUser> updates, string userId)
