@@ -30,9 +30,10 @@ namespace FoodDelieveryManagementAPI.Controllers
 
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteCustomer(int id)
+        public async Task<IActionResult> DeleteCustomer(int id)
         {
-            if (_customerBusiness.DeleteCustomer(id))
+            var isUserDeleted = await _customerBusiness.DeleteCustomer(id);
+            if (isUserDeleted)
             {
                 return Ok("Customer Deleted Successfully");
             }
@@ -46,17 +47,14 @@ namespace FoodDelieveryManagementAPI.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return BadRequest("Model provided is not valid..");
             }
-
             var result = await _customerBusiness.Register(registerDetails, "Customer");
-
             if (result == true)
             {
                 return StatusCode(StatusCodes.Status201Created);
             }
-
-            return BadRequest("One of the above methods fail..");
+            return BadRequest("User Already Exists..");
         }
 
         [HttpPatch]

@@ -1,5 +1,5 @@
 ﻿using FoodDelieveryManagementAPI.Business.Interfaces;
-using FoodDelieveryManagementAPI.Data;
+using FoodDelieveryManagementAPI.DataRepositories.Interfaces;
 using FoodDelieveryManagementAPI.Enum;
 using FoodDelieveryManagementAPI.Models;
 using Microsoft.AspNetCore.Identity;
@@ -12,28 +12,34 @@ namespace FoodDelieveryManagementAPI.Business
 {
     public class CustomerBusiness : ICustomerBusiness
     {
-        private ApiDbContext _dbContext;
+        private readonly ICustomerDataRepo _dataRepo;
         private readonly UserManager<IdentityUser> _userManager;
 
-        public CustomerBusiness(ApiDbContext dbContext, UserManager<IdentityUser> userManager)
+        public CustomerBusiness(ICustomerDataRepo dataRepo, UserManager<IdentityUser> userManager)
         {
-            _dbContext = dbContext;
+            _dataRepo = dataRepo;
             _userManager = userManager;
         }
         public List<AppUser> GetCustomerList()
         {
-            var customerList = _dbContext.UserDetails.ToList().FindAll(customer => customer.UserRole == UserType.Customer);
-            return customerList;
+            return _dataRepo.GetAllCustomers();
         }
 
-        public bool DeleteCustomer(int id)
+        public async Task<bool> DeleteCustomer(int id)
         {
-            var reqCustomer = _dbContext.UserDetails.FirstOrDefault(customer => customer.ID == id);
+            var reqCustomer = _dataRepo.GetAllCustomers().FirstOrDefault(customer => customer.ID == id);
 
             if (reqCustomer != null)
             {
-                _dbContext.UserDetails.Remove(reqCustomer);
-                _dbContext.SaveChanges();
+                var identityId = reqCustomer.IdentityUserId;
+                _dataRepo.DeleteCustomer(reqCustomer);
+
+                var identityCustomer = await _userManager.FindByIdAsync(identityId);
+                if (identityCustomer != null)
+                {
+                    await _userManager.DeleteAsync(identityCustomer);
+                }
+
                 return true;
             }
 
@@ -48,6 +54,13 @@ namespace FoodDelieveryManagementAPI.Business
                 Email = registerDetails.Email
             };
 
+            var ifUserExists = _userManager.FindByEmailAsync(identityUser.Email);
+
+            if (ifUserExists != null)
+            {
+                return false;
+            }
+
             var result1 = await _userManager.CreateAsync(identityUser, registerDetails.Password);
             var result2 = await _userManager.AddToRoleAsync(identityUser, role);
 
@@ -60,8 +73,8 @@ namespace FoodDelieveryManagementAPI.Business
                     Address = registerDetails.Address,
                     ContactNo = registerDetails.ContactNo,
                 };
-                _dbContext.UserDetails.Add(newUser);
-                _dbContext.SaveChanges();
+                
+                _dataRepo.AddCustomer(newUser);
 
                 return true;   
             }
@@ -70,9 +83,7 @@ namespace FoodDelieveryManagementAPI.Business
 
         public void Update(JsonPatchDocument<AppUser> updates, string identityUserId)
         {
-            var reqUser = _dbContext.UserDetails.FirstOrDefault(user => user.IdentityUserId.Equals(identityUserId));
-            updates.ApplyTo(reqUser);
-            _dbContext.SaveChanges();
+            _dataRepo.UpdateCustomer(updates, identityUserId);
         }
     }
 }

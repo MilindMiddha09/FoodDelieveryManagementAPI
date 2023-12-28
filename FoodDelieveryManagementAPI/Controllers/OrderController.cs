@@ -19,9 +19,9 @@ namespace FoodDelieveryManagementAPI.Controllers
 
         [Route("/api/order/updatehistory")]
         [HttpPost]
-        public IActionResult UpdateHistory([FromBody] List<OrderProducts> order, int restaurantId, int CustomeId)
+        public IActionResult UpdateHistory([FromBody] List<OrderProducts> order, int restaurantId, int customerId)
         {
-            if (_orderBusiness.UpdateHistory(order, restaurantId, CustomeId))
+            if (_orderBusiness.UpdateHistory(order, restaurantId, customerId))
                 return StatusCode(StatusCodes.Status201Created);
 
             return BadRequest();

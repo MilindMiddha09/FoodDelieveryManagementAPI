@@ -1,5 +1,5 @@
 ﻿using FoodDelieveryManagementAPI.Business.Interfaces;
-using FoodDelieveryManagementAPI.Data;
+using FoodDelieveryManagementAPI.DataRepositories.Interfaces;
 using FoodDelieveryManagementAPI.Enum;
 using FoodDelieveryManagementAPI.Models;
 using Microsoft.AspNetCore.Identity;
@@ -12,29 +12,35 @@ namespace FoodDelieveryManagementAPI.Business
 {
     public class AdminBusiness : IAdminBusiness
     {   
-        private ApiDbContext _dbContext;
         private readonly UserManager<IdentityUser> _userManager;
-        public AdminBusiness(ApiDbContext dbContext, UserManager<IdentityUser> userManager)
+        private readonly IAdminDataRepo _adminDataRepo;
+        public AdminBusiness(UserManager<IdentityUser> userManager, IAdminDataRepo adminDataRepo)
         {
-            _dbContext = dbContext;
+            _adminDataRepo = adminDataRepo;
             _userManager = userManager;
         }
 
         public List<AppUser> GetAdminList()
         {
-            return _dbContext.UserDetails.ToList().FindAll(admin => admin.UserRole == UserType.Admin);
+            return _adminDataRepo.GetAllAdminList();
         }
 
-        public bool DeleteAdmin(int id)
+        public async Task<bool> DeleteAdmin(int id)
         {
-            var reqAdmin = _dbContext.UserDetails.FirstOrDefault(admin => admin.ID == id);
+            var reqAdmin = _adminDataRepo.GetAllAdminList().FirstOrDefault(user => user.ID == id);
             if (reqAdmin != null)
             {
-                _dbContext.UserDetails.Remove(reqAdmin);
-                _dbContext.SaveChanges();
+                var identityId = reqAdmin.IdentityUserId;
+
+                _adminDataRepo.RemoveAdmin(reqAdmin);
+
+                var identityAdmin = await _userManager.FindByIdAsync(identityId);
+                if (identityAdmin != null)
+                {
+                    await _userManager.DeleteAsync(identityAdmin);
+                }
                 return true;
             }
-
             return false;
         }
 
@@ -46,17 +52,23 @@ namespace FoodDelieveryManagementAPI.Business
                 Email = registerDetails.Email
             };
 
+            var ifUserExists = await _userManager.FindByEmailAsync(identityUser.Email);
+
+            if(ifUserExists != null)
+            {
+                return false;
+            }
+
             var result1 = await _userManager.CreateAsync(identityUser, registerDetails.Password);
             var result2 = await _userManager.AddToRoleAsync(identityUser, role);
 
             if (result1.Succeeded && result2.Succeeded)
             {
-                AppUser newUser = new AppUser { IdentityUserId = identityUser.Id ,
+                AppUser newUser = new AppUser {
                     UserRole = UserType.Admin,
+                    IdentityUserId = identityUser.Id,
                 };
-                _dbContext.UserDetails.Add(newUser);
-                _dbContext.SaveChanges();
-
+                _adminDataRepo.AddAdmin(newUser);
                 return true;
             }
             return false;
@@ -64,10 +76,7 @@ namespace FoodDelieveryManagementAPI.Business
 
         public void Update(JsonPatchDocument<AppUser> updates, string userId)
         {
-            var reqUser = _dbContext.UserDetails.FirstOrDefault(user => user.IdentityUserId == userId);
-
-            updates.ApplyTo(reqUser);
-            _dbContext.SaveChanges();
+           _adminDataRepo.UpdateAdmin(updates, userId);
         }
     }
 }

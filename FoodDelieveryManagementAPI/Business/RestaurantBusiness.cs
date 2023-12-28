@@ -1,5 +1,5 @@
 ﻿using FoodDelieveryManagementAPI.Business.Interfaces;
-using FoodDelieveryManagementAPI.Data;
+using FoodDelieveryManagementAPI.DataRepositories.Interfaces;
 using FoodDelieveryManagementAPI.Enum;
 using FoodDelieveryManagementAPI.Models;
 using Microsoft.AspNetCore.Identity;
@@ -12,27 +12,33 @@ namespace FoodDelieveryManagementAPI.Business
 {
     public class RestaurantBusiness : IRestaurantBusiness
     {
-        private ApiDbContext _dbContext;
+        
         private readonly UserManager<IdentityUser> _userManager;
-        public RestaurantBusiness(ApiDbContext dbContext, UserManager<IdentityUser> userManager)
+        private readonly IRestaurantDataRepo _dataRepo;
+        private readonly IMenuDataRepo _menuDataRepo;
+        public RestaurantBusiness(UserManager<IdentityUser> userManager, IRestaurantDataRepo dataRepo, IMenuDataRepo menuDataRepo)
         {
-            _dbContext = dbContext;
+            _dataRepo = dataRepo;
             _userManager = userManager;
+            _menuDataRepo = menuDataRepo;
         }
 
         public List<AppUser> GetRestaurants()
         {
-            return _dbContext.UserDetails.ToList().FindAll(rest => rest.UserRole == UserType.Restaurant);
+            return _dataRepo.GetAllRestaurants();
         }
 
-        public bool DeleteRestaurant(int id)
+        public async Task<bool> DeleteRestaurant(int id)
         {
-            var reqRestaurant = _dbContext.UserDetails.FirstOrDefault(restaurant => restaurant.ID == id);
+            var reqRestaurant = _dataRepo.GetAllRestaurants().FirstOrDefault(restaurant => restaurant.ID == id);
 
             if (reqRestaurant != null)
             {
-                _dbContext.UserDetails.Remove(reqRestaurant);
-                _dbContext.SaveChanges();
+                var identityId = reqRestaurant.IdentityUserId;
+                var identityRestaurant = await _userManager.FindByIdAsync(identityId);
+
+                _dataRepo.DeleteRestaurant(reqRestaurant);
+                await _userManager.DeleteAsync(identityRestaurant);
                 return true;
             }
 
@@ -59,8 +65,7 @@ namespace FoodDelieveryManagementAPI.Business
                     Address = registerDetails.Address,
                     ContactNo = registerDetails.ContactNo,
                 };
-                _dbContext.UserDetails.Add(newUser);
-                _dbContext.SaveChanges();
+                _dataRepo.AddRestaurant(newUser);
 
                 return true;
             }
@@ -69,28 +74,17 @@ namespace FoodDelieveryManagementAPI.Business
 
         public List<MenuProduct> GetRestaurantMenu(int id)
         {
-            return _dbContext.MenuProducts.ToList().FindAll(rest=>rest.RestaurantId == id);
+            return _menuDataRepo.GetRestaurantMenu(id);
         }
 
         public AppUser GetRestaurantDetailsById(int id)
         {
-            return _dbContext.UserDetails.FirstOrDefault(rest => rest.ID == id);
-        }
-
-        public List<MenuProduct> GetMenu(string userId)
-        {
-            var restaurantId = _dbContext.UserDetails.FirstOrDefault(user => user.IdentityUserId.Equals(userId)).ID;
-
-            var menu =  _dbContext.MenuProducts.ToList().FindAll(rest => rest.RestaurantId == restaurantId);
-            return menu;
+            return _dataRepo.GetAllRestaurants().FirstOrDefault(rest => rest.ID == id);
         }
 
         public void Update(JsonPatchDocument<AppUser> updates, string userId)
         {
-            var reqUser = _dbContext.UserDetails.FirstOrDefault(user => user.IdentityUserId == userId);
-
-            updates.ApplyTo(reqUser);
-            _dbContext.SaveChanges();
+            _dataRepo.Update(updates, userId);
         }
 
     }

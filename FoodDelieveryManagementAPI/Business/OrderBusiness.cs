@@ -1,5 +1,6 @@
 ﻿using FoodDelieveryManagementAPI.Business.Interfaces;
 using FoodDelieveryManagementAPI.Data;
+using FoodDelieveryManagementAPI.DataRepositories;
 using FoodDelieveryManagementAPI.Models;
 using System;
 using System.Collections.Generic;
@@ -9,14 +10,13 @@ namespace FoodDelieveryManagementAPI.Business
 {
     public class OrderBusiness : IOrderBusiness
     {
-        private readonly ApiDbContext _dbContext;
-        public OrderBusiness(ApiDbContext dbContext)
+        private readonly IOrderDataRepo _dataRepo;
+        public OrderBusiness(IOrderDataRepo dataRepo)
         {
-            _dbContext = dbContext;
+            _dataRepo = dataRepo;
         }
         public bool UpdateHistory(List<OrderProducts> order, int restaurantId, int customerId)
         {
-
             int totalAmount = 0;
 
             foreach (var item in order)
@@ -36,18 +36,14 @@ namespace FoodDelieveryManagementAPI.Business
                 TotalAmount = totalAmount
             };
 
-            _dbContext.Orders.Add(newOrder);
-            _dbContext.SaveChanges();
+            _dataRepo.SaveOrder(newOrder);
 
-            var id = _dbContext.Orders.Max(order => order.Id);
+            var id = _dataRepo.FindCurrentOrder(newOrder);
 
             foreach(var orderProduct in order) {
                 orderProduct.OrderId = id;
-                _dbContext.OrderProducts.Add(orderProduct);
+                _dataRepo.SaveOrderedProduct(orderProduct);
             }
-
-            _dbContext.SaveChanges();
-
             return true;
         }
     }

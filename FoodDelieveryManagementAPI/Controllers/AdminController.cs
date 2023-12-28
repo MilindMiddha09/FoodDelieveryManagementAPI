@@ -32,17 +32,18 @@ namespace FoodDelieveryManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteAdmin(int id)
+        public async Task<IActionResult> DeleteAdmin(int id)
         {
-            if (_adminBusiness.DeleteAdmin(id))
-                return Ok("Admin Deleted Successfully...");
+            var ifUserDeleted = await _adminBusiness.DeleteAdmin(id);
+            if (!ifUserDeleted)
+                return StatusCode(StatusCodes.Status404NotFound);
 
-            return StatusCode(StatusCodes.Status404NotFound);
+            return Ok("Admin Deleted Successfully...");
         }
 
         [Route("/api/admin/register")]
         [HttpPost]
-        public async Task<IActionResult> RegisterAsRestaurant([FromBody] Register registerDetails)
+        public async Task<IActionResult> RegisterAsAdmin([FromBody] Register registerDetails)
         {
             if (!ModelState.IsValid)
             {

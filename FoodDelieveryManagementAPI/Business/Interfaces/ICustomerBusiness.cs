@@ -9,7 +9,7 @@ namespace FoodDelieveryManagementAPI.Business.Interfaces
     {
         List<AppUser> GetCustomerList();
         Task<bool> Register(Register registerDetails, string role);
-        bool DeleteCustomer(int id);
+        Task<bool> DeleteCustomer(int id);
         void Update(JsonPatchDocument<AppUser> updates, string identityUserId);
 
 

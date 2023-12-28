@@ -32,9 +32,10 @@ namespace FoodDelieveryManagementAPI.Controllers
         }
 
         [HttpDelete]
-        public IActionResult DeleteRestaurant(int id)
+        public async Task<IActionResult> DeleteRestaurant(int id)
         {
-            if (_restaurantBusiness.DeleteRestaurant(id))
+            var ifUserDeleted = await _restaurantBusiness.DeleteRestaurant(id);
+            if (ifUserDeleted)
                 return Ok("Restaurant Deleted Successfully...");
 
             return StatusCode(StatusCodes.Status404NotFound);
@@ -83,19 +84,19 @@ namespace FoodDelieveryManagementAPI.Controllers
             return Ok(restaurant);
         }
 
-        [Route("/api/restaurant/menu")]
-        [HttpGet]
-        public IActionResult GetMenu()
-        {
-            var userId = User.Identity.GetUserId();
+        //[Route("/api/restaurant/menu")]
+        //[HttpGet]
+        //public IActionResult GetMenu()
+        //{
+        //    var userId = User.Identity.GetUserId();
 
-            var menu = _restaurantBusiness.GetMenu(userId);
+        //    var menu = _restaurantBusiness.GetMenu(userId);
             
-            if(menu.Count==0)
-                return BadRequest("No menu exists...");
+        //    if(menu.Count==0)
+        //        return BadRequest("No menu exists...");
 
-            return Ok(menu);
-        }
+        //    return Ok(menu);
+        //}
 
         [HttpPatch]
         public IActionResult Update([FromBody] JsonPatchDocument<AppUser> updates)

@@ -8,13 +8,13 @@ namespace FoodDelieveryManagementAPI.Business.Interfaces
     public interface IRestaurantBusiness
     {
         List<AppUser> GetRestaurants();
-        bool DeleteRestaurant(int id);
+        Task<bool> DeleteRestaurant(int id);
         Task<bool> Register(Register registerDetails, string role);
         List<MenuProduct> GetRestaurantMenu(int id);
 
         AppUser GetRestaurantDetailsById(int id);
 
-        List<MenuProduct> GetMenu(string userId);
+        //List<MenuProduct> GetMenu(string userId);
         void Update(JsonPatchDocument<AppUser> updates, string userId);
     }
 }

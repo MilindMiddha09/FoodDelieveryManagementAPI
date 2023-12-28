@@ -1,6 +1,8 @@
 using FoodDelieveryManagementAPI.Business;
 using FoodDelieveryManagementAPI.Business.Interfaces;
 using FoodDelieveryManagementAPI.Data;
+using FoodDelieveryManagementAPI.DataRepositories;
+using FoodDelieveryManagementAPI.DataRepositories.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -26,11 +28,19 @@ namespace FoodDelieveryManagementAPI
         {
             services.AddControllers().AddNewtonsoftJson();
             services.AddDbContext<ApiDbContext>(option => option.UseSqlServer(@"Data Source = (localdb)\MSSQLLocalDB; Initial Catalog = FoodDelieveryManagementDb;"));
+            
             services.AddScoped<IAdminBusiness, AdminBusiness>();
             services.AddScoped<ICustomerBusiness, CustomerBusiness>();
             services.AddScoped<IRestaurantBusiness, RestaurantBusiness>();
             services.AddScoped<IMenuBusiness, MenuBusiness>();
             services.AddScoped<IOrderBusiness, OrderBusiness>();
+
+            services.AddScoped<IAdminDataRepo, AdminDataRepo>();
+            services.AddScoped<ICustomerDataRepo, CustomerDataRepo>();
+            services.AddScoped<IRestaurantDataRepo, RestaurantDataRepo>();
+            services.AddScoped<IMenuDataRepo, MenuDataRepo>();
+            services.AddScoped<IOrderDataRepo, OrderDataRepo>();
+            
             services.AddHttpContextAccessor();
             services.AddIdentity<IdentityUser, IdentityRole>().
                 AddEntityFrameworkStores<ApiDbContext>();
