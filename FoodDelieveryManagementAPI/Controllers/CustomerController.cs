@@ -1,9 +1,11 @@
 ﻿using FoodDelieveryManagementAPI.Business.Interfaces;
 using FoodDelieveryManagementAPI.Models;
 using Microsoft.AspNet.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace FoodDelieveryManagementAPI.Controllers
@@ -21,51 +23,82 @@ namespace FoodDelieveryManagementAPI.Controllers
 
         [Route("/api/customers")]
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public IActionResult GetCustomers()
         {
-            var CustomerList = _customerBusiness.GetCustomerList();
+            try
+            {
+                var customerList = _customerBusiness.GetCustomerList();
 
-            return Ok(CustomerList);
+                if (customerList.Count == 0)
+                    return StatusCode(StatusCodes.Status404NotFound);
+
+                return Ok(customerList);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
 
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteCustomer(int id)
         {
-            var isUserDeleted = await _customerBusiness.DeleteCustomer(id);
-            if (isUserDeleted)
+            try
             {
-                return Ok("Customer Deleted Successfully");
+                await _customerBusiness.DeleteCustomer(id);
             }
-
-            return StatusCode(StatusCodes.Status404NotFound);
+            catch(ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status404NotFound);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+            return Ok("Customer Deleted Successfully"); 
         }
 
         [Route("/api/customer/register")]
         [HttpPost]
-        public async Task<IActionResult> Register([FromBody] Register registerDetails)
+        public async Task<IActionResult> Register([FromBody] RegisterDetails registerDetails)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest("Model provided is not valid..");
+                await _customerBusiness.Register(registerDetails, "Customer");
             }
-            var result = await _customerBusiness.Register(registerDetails, "Customer");
-            if (result == true)
+            catch(ArgumentException ex)
             {
-                return StatusCode(StatusCodes.Status201Created);
+                return BadRequest(ex.Message);
             }
-            return BadRequest("User Already Exists..");
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch(Exception ex)
+            {   
+                //Logging krni h.
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+            return StatusCode(StatusCodes.Status201Created);
+            
         }
 
         [HttpPatch]
+        [Authorize(Roles = "Customer")]
         public IActionResult Update([FromBody] JsonPatchDocument<AppUser> updates)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
             var userId = User.Identity.GetUserId();
-            _customerBusiness.Update(updates, userId);
+            try
+            {
+                _customerBusiness.Update(updates, userId);
+            }
+            catch
+            {
+                return BadRequest("Something Bad Occured.");
+            }
             return Ok("User updated Successfully...");
         }
 

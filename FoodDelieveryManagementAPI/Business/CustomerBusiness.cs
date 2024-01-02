@@ -4,6 +4,7 @@ using FoodDelieveryManagementAPI.Enum;
 using FoodDelieveryManagementAPI.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,7 +26,7 @@ namespace FoodDelieveryManagementAPI.Business
             return _dataRepo.GetAllCustomers();
         }
 
-        public async Task<bool> DeleteCustomer(int id)
+        public async Task DeleteCustomer(int id)
         {
             var reqCustomer = _dataRepo.GetAllCustomers().FirstOrDefault(customer => customer.ID == id);
 
@@ -39,14 +40,12 @@ namespace FoodDelieveryManagementAPI.Business
                 {
                     await _userManager.DeleteAsync(identityCustomer);
                 }
-
-                return true;
+                return;
             }
-
-            return false;
+            throw new ArgumentException();
         }
 
-        public async Task<bool> Register(Register registerDetails, string role)
+        public async Task Register(RegisterDetails registerDetails, string role)
         {
             var identityUser = new IdentityUser
             {   
@@ -58,7 +57,7 @@ namespace FoodDelieveryManagementAPI.Business
 
             if (ifUserExists != null)
             {
-                return false;
+                throw new ArgumentException("User Already Exists.");
             }
 
             var result1 = await _userManager.CreateAsync(identityUser, registerDetails.Password);
@@ -68,7 +67,7 @@ namespace FoodDelieveryManagementAPI.Business
             {
                 AppUser newUser = new AppUser {
                     IdentityUserId = identityUser.Id , 
-                    UserRole = UserType.Customer, 
+                    UserRole = UserRole.Customer, 
                     Name = registerDetails.Name,
                     Address = registerDetails.Address,
                     ContactNo = registerDetails.ContactNo,
@@ -76,9 +75,9 @@ namespace FoodDelieveryManagementAPI.Business
                 
                 _dataRepo.AddCustomer(newUser);
 
-                return true;   
+                return;   
             }
-            return false;
+            throw new InvalidOperationException("Something Bad Occured.");
         }
 
         public void Update(JsonPatchDocument<AppUser> updates, string identityUserId)

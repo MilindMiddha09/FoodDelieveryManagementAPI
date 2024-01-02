@@ -18,7 +18,7 @@ namespace FoodDelieveryManagementAPI.DataRepositories
 
         public List<AppUser> GetAllAdminList()
         {
-            return _dbContext.UserDetails.ToList().FindAll(user => user.UserRole == UserType.Admin);
+            return _dbContext.UserDetails.ToList().FindAll(user => user.UserRole == UserRole.Admin);
         }
         
         public void RemoveAdmin(AppUser user)

@@ -1,6 +1,6 @@
 ﻿namespace FoodDelieveryManagementAPI.Enum
 {
-    public enum UserType
+    public enum UserRole
     {
         Admin = 0,
         Customer = 1,

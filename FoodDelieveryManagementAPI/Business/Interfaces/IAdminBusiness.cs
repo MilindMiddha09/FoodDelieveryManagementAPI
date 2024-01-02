@@ -8,8 +8,8 @@ namespace FoodDelieveryManagementAPI.Business.Interfaces
     public interface IAdminBusiness
     {
         List<AppUser> GetAdminList();
-        Task<bool> Register(Register registerDetails, string role);
-        Task<bool> DeleteAdmin(int id);
+        Task Register(RegisterDetails registerDetails, string role);
+        Task DeleteAdmin(int id);
         void Update(JsonPatchDocument<AppUser> updates, string userId);
     }
 }

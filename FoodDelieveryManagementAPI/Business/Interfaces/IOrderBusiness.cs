@@ -5,6 +5,6 @@ namespace FoodDelieveryManagementAPI.Business.Interfaces
 {
     public interface IOrderBusiness
     {
-        bool UpdateHistory(List<OrderProducts> order, int restaurantId, int customerId);
+        void UpdateHistory(List<OrderProducts> order, int restaurantId, int customerId);
     }
 }

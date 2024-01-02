@@ -1,7 +1,9 @@
 ﻿using FoodDelieveryManagementAPI.Business.Interfaces;
 using FoodDelieveryManagementAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 
 namespace FoodDelieveryManagementAPI.Controllers
@@ -19,12 +21,22 @@ namespace FoodDelieveryManagementAPI.Controllers
 
         [Route("/api/order/updatehistory")]
         [HttpPost]
+        [Authorize(Roles = "Customer")]
         public IActionResult UpdateHistory([FromBody] List<OrderProducts> order, int restaurantId, int customerId)
         {
-            if (_orderBusiness.UpdateHistory(order, restaurantId, customerId))
-                return StatusCode(StatusCodes.Status201Created);
-
-            return BadRequest();
+            try
+            {
+                _orderBusiness.UpdateHistory(order, restaurantId, customerId);
+            }
+            catch (ArgumentException)
+            {
+                return BadRequest("Enter Ordered products.");
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+            return StatusCode(StatusCodes.Status201Created);
         }
     }
 }

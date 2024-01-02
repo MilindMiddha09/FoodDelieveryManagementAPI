@@ -1,9 +1,11 @@
 ﻿using FoodDelieveryManagementAPI.Business.Interfaces;
 using FoodDelieveryManagementAPI.Models;
 using Microsoft.AspNet.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace FoodDelieveryManagementAPI.Controllers
@@ -13,7 +15,6 @@ namespace FoodDelieveryManagementAPI.Controllers
     public class AdminController : ControllerBase
     {
         private readonly IAdminBusiness _adminBusiness;
-
         public AdminController(IAdminBusiness adminBusiness)
         {
             _adminBusiness = adminBusiness;
@@ -21,55 +22,81 @@ namespace FoodDelieveryManagementAPI.Controllers
 
         [Route("/api/admins")]
         [HttpGet]
+        [Authorize(Roles ="Admin")]
         public IActionResult GetAdmins()
         {
-            var adminList = _adminBusiness.GetAdminList();
+            try
+            {
+                var adminList = _adminBusiness.GetAdminList();
 
-            if (adminList.Count == 0)
-                return NotFound("No admin exists..");
+                if (adminList.Count == 0)
+                    return NotFound("No admin exists..");
 
-            return Ok(adminList);
+                return Ok(adminList);
+            }
+
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAdmin(int id)
         {
-            var ifUserDeleted = await _adminBusiness.DeleteAdmin(id);
-            if (!ifUserDeleted)
+            try
+            {
+                await _adminBusiness.DeleteAdmin(id);
+            }
+            catch(ArgumentException)
+            {
                 return StatusCode(StatusCodes.Status404NotFound);
-
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
             return Ok("Admin Deleted Successfully...");
         }
 
         [Route("/api/admin/register")]
         [HttpPost]
-        public async Task<IActionResult> RegisterAsAdmin([FromBody] Register registerDetails)
+        public async Task<IActionResult> RegisterAsAdmin([FromBody] RegisterDetails registerDetails)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest();
+                await _adminBusiness.Register(registerDetails, "Admin");
             }
-
-            var result = await _adminBusiness.Register(registerDetails, "Admin");
-
-            if (result == true)
+            catch(ArgumentException ex)
             {
-                return StatusCode(StatusCodes.Status201Created);
+                return BadRequest(ex.Message);
             }
-
-            return BadRequest();
+            catch(InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+            return StatusCode(StatusCodes.Status201Created);
         }
 
         [HttpPatch]
+        [Authorize(Roles = "Admin")]
         public IActionResult Update(JsonPatchDocument<AppUser> update)
         {
-            if(!ModelState.IsValid)
-                return BadRequest();
-
             var userId = User.Identity.GetUserId();
 
-            _adminBusiness.Update(update, userId);
-
+            try
+            {
+                _adminBusiness.Update(update, userId);
+            }
+            catch
+            {
+                return BadRequest("Something Bad occured..");
+            }
             return Ok("User updated successfully...");
         }
     }

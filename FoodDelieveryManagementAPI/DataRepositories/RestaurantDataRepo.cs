@@ -19,7 +19,7 @@ namespace FoodDelieveryManagementAPI.DataRepositories
 
         public List<AppUser> GetAllRestaurants()
         {
-            return _dbContext.UserDetails.ToList().FindAll(user => user.UserRole == UserType.Restaurant);
+            return _dbContext.UserDetails.ToList().FindAll(user => user.UserRole == UserRole.Restaurant);
         }
 
         public void AddRestaurant(AppUser user)

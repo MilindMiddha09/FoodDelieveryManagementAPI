@@ -1,9 +1,10 @@
 ﻿using FoodDelieveryManagementAPI.Models;
+using System.Threading.Tasks;
 
 namespace FoodDelieveryManagementAPI.Business.Interfaces
 {
-    public interface IMenuBusiness
+    public interface IAdministrationBusiness
     {
-        void UpdateMenu(MenuProduct product, string userName);
+        Task CreateRole(Usertype role);
     }
 }

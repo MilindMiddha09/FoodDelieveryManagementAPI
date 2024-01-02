@@ -1,9 +1,11 @@
 ﻿using FoodDelieveryManagementAPI.Business.Interfaces;
 using FoodDelieveryManagementAPI.Models;
 using Microsoft.AspNet.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace FoodDelieveryManagementAPI.Controllers
@@ -21,94 +23,120 @@ namespace FoodDelieveryManagementAPI.Controllers
 
         [Route("/api/restaurants")]
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public IActionResult GetRestaurants()
         {
-            var restaurantsList = _restaurantBusiness.GetRestaurants();
-            if (restaurantsList == null)
+            try
             {
-                return NotFound();
+                var restaurantsList = _restaurantBusiness.GetRestaurants();
+                if (restaurantsList.Count == 0)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound);
+                }
+                return Ok(restaurantsList);
             }
-            return Ok(restaurantsList);
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
 
         [HttpDelete]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteRestaurant(int id)
         {
-            var ifUserDeleted = await _restaurantBusiness.DeleteRestaurant(id);
-            if (ifUserDeleted)
-                return Ok("Restaurant Deleted Successfully...");
-
-            return StatusCode(StatusCodes.Status404NotFound);
+            try
+            {
+                await _restaurantBusiness.DeleteRestaurant(id);
+            }
+            catch (ArgumentException)
+            {
+                return StatusCode(StatusCodes.Status404NotFound);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+            return Ok("Restaurant Deleted Successfully...");
         }
 
         [Route("/api/restaurant/register")]
         [HttpPost]
-        public async Task<IActionResult> RegisterAsRestaurant([FromBody] Register registerDetails)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RegisterAsRestaurant([FromBody] RegisterDetails registerDetails)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest();
+                await _restaurantBusiness.Register(registerDetails, "Restaurant");
             }
-
-            var result = await _restaurantBusiness.Register(registerDetails, "Restaurant");
-
-            if (result == true)
+            catch(ArgumentException ex)
             {
-                return StatusCode(StatusCodes.Status201Created);
+                return BadRequest(ex.Message);
             }
-
-            return BadRequest();
+            catch(InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+            return StatusCode(StatusCodes.Status201Created);
+            
         }
 
         [Route("/api/menu/{id}")]
         [HttpGet]
+        [Authorize(Roles = "Customer")]
         public IActionResult GetRestaurantMenu(int id)
         {
-            var menu = _restaurantBusiness.GetRestaurantMenu(id);
+            try
+            {
+                var menu = _restaurantBusiness.GetRestaurantMenu(id);
 
-            if (menu.Count == 0)
-                return BadRequest();
+                if (menu.Count == 0)
+                    return StatusCode(StatusCodes.Status404NotFound);
 
-            return Ok(menu);
+                return Ok(menu);
+            }
+            catch(Exception ex) {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
 
         
         [HttpGet("{id}")]
+        [Authorize(Roles = "Restaurant")]
         public IActionResult GetRestaurantDetailsById(int id)
         {
-            var restaurant = _restaurantBusiness.GetRestaurantDetailsById(id);
+            try
+            {
+                var restaurant = _restaurantBusiness.GetRestaurantDetailsById(id);
 
-            if(restaurant == null)
-                return BadRequest();
+                if (restaurant == null)
+                    return StatusCode(StatusCodes.Status404NotFound);
 
-            return Ok(restaurant);
+                return Ok(restaurant);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
 
-        //[Route("/api/restaurant/menu")]
-        //[HttpGet]
-        //public IActionResult GetMenu()
-        //{
-        //    var userId = User.Identity.GetUserId();
-
-        //    var menu = _restaurantBusiness.GetMenu(userId);
-            
-        //    if(menu.Count==0)
-        //        return BadRequest("No menu exists...");
-
-        //    return Ok(menu);
-        //}
-
         [HttpPatch]
+        [Authorize(Roles = "Restaurant")]
         public IActionResult Update([FromBody] JsonPatchDocument<AppUser> updates)
         {
-            if(!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-
             var userId = User.Identity.GetUserId();
-
-            _restaurantBusiness.Update(updates, userId);
+            try
+            {
+                _restaurantBusiness.Update(updates, userId);
+            }
+            catch (Exception)
+            {
+                return BadRequest("Something bad Occured.");
+            }
 
             return Ok("User updated successfully...");
         }

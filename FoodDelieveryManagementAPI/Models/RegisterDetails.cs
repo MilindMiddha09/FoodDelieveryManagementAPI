@@ -2,7 +2,7 @@
 
 namespace FoodDelieveryManagementAPI.Models
 {
-    public class Register
+    public class RegisterDetails
     {
         [Required]
         public string Name { get; set; }

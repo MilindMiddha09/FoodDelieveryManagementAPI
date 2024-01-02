@@ -4,6 +4,7 @@ using FoodDelieveryManagementAPI.Enum;
 using FoodDelieveryManagementAPI.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,7 +26,7 @@ namespace FoodDelieveryManagementAPI.Business
             return _adminDataRepo.GetAllAdminList();
         }
 
-        public async Task<bool> DeleteAdmin(int id)
+        public async Task DeleteAdmin(int id)
         {
             var reqAdmin = _adminDataRepo.GetAllAdminList().FirstOrDefault(user => user.ID == id);
             if (reqAdmin != null)
@@ -39,12 +40,12 @@ namespace FoodDelieveryManagementAPI.Business
                 {
                     await _userManager.DeleteAsync(identityAdmin);
                 }
-                return true;
+                return;
             }
-            return false;
+            throw new ArgumentException();
         }
 
-        public async Task<bool> Register(Register registerDetails, string role)
+        public async Task Register(RegisterDetails registerDetails, string role)
         {
             var identityUser = new IdentityUser
             {
@@ -56,7 +57,7 @@ namespace FoodDelieveryManagementAPI.Business
 
             if(ifUserExists != null)
             {
-                return false;
+                throw new ArgumentException("User Already Exists..");
             }
 
             var result1 = await _userManager.CreateAsync(identityUser, registerDetails.Password);
@@ -65,13 +66,14 @@ namespace FoodDelieveryManagementAPI.Business
             if (result1.Succeeded && result2.Succeeded)
             {
                 AppUser newUser = new AppUser {
-                    UserRole = UserType.Admin,
+                    Name = registerDetails.Name,
+                    UserRole = UserRole.Admin,
                     IdentityUserId = identityUser.Id,
                 };
                 _adminDataRepo.AddAdmin(newUser);
-                return true;
+                return;
             }
-            return false;
+            throw new InvalidOperationException("Something Bad Occured.");
         }
 
         public void Update(JsonPatchDocument<AppUser> updates, string userId)

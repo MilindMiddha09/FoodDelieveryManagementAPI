@@ -8,8 +8,8 @@ namespace FoodDelieveryManagementAPI.Business.Interfaces
     public interface ICustomerBusiness
     {
         List<AppUser> GetCustomerList();
-        Task<bool> Register(Register registerDetails, string role);
-        Task<bool> DeleteCustomer(int id);
+        Task Register(RegisterDetails registerDetails, string role);
+        Task DeleteCustomer(int id);
         void Update(JsonPatchDocument<AppUser> updates, string identityUserId);
 
 

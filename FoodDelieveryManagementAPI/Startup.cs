@@ -11,9 +11,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FoodDelieveryManagementAPI
 {
+    [ExcludeFromCodeCoverage]
+
     public class Startup
     {
         public Startup(IConfiguration configuration)
@@ -34,6 +37,8 @@ namespace FoodDelieveryManagementAPI
             services.AddScoped<IRestaurantBusiness, RestaurantBusiness>();
             services.AddScoped<IMenuBusiness, MenuBusiness>();
             services.AddScoped<IOrderBusiness, OrderBusiness>();
+            services.AddScoped<IAuthBusiness, AuthBusiness>();
+            services.AddScoped<IAdministrationBusiness, AdministrationBusiness>();
 
             services.AddScoped<IAdminDataRepo, AdminDataRepo>();
             services.AddScoped<ICustomerDataRepo, CustomerDataRepo>();
@@ -75,9 +80,8 @@ namespace FoodDelieveryManagementAPI
 
             app.UseHttpsRedirection();
 
-            app.UseRouting();
             app.UseAuthentication();
-
+            app.UseRouting();
             app.UseAuthorization();
             
             app.UseEndpoints(endpoints =>

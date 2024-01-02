@@ -1,6 +1,9 @@
-﻿using FoodDelieveryManagementAPI.Models;
+﻿using FoodDelieveryManagementAPI.Business.Interfaces;
+using FoodDelieveryManagementAPI.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace FoodDelieveryManagementAPI.Controllers
@@ -9,33 +12,46 @@ namespace FoodDelieveryManagementAPI.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly SignInManager<IdentityUser> _signInManager;
-        public AuthController(SignInManager<IdentityUser> signInManager)
+        private readonly IAuthBusiness _authBusiness;
+        public AuthController(IAuthBusiness authBusiness)
         {
-            _signInManager = signInManager;
+            _authBusiness = authBusiness;
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] Login loginDetails)
+        public async Task<IActionResult> Login([FromBody] LoginDetails loginDetails)
         {
-            if (ModelState.IsValid)
+            try
             {
-                var result = await _signInManager.PasswordSignInAsync(loginDetails.Email, loginDetails.Password, loginDetails.RememberMe, false);
-
-                if (result.Succeeded)
-                {
-                    return Ok("Logged in Successfully... ");
-                }
-
-                ModelState.AddModelError(string.Empty, "Invalid Email or Password");
+                await _authBusiness.Login(loginDetails);
             }
-            return BadRequest(ModelState);
+
+            catch (ArgumentException)
+            {
+                return BadRequest("Input doesn't have any values.");
+            }
+
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
+            return Ok("Logged In Successfully.");
         }
 
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            await _signInManager.SignOutAsync();
+            try
+            {
+                await _authBusiness.Logout();
+            }
+
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+
             return Ok("Signed Out...");
         }
     }

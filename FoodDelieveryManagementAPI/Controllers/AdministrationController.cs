@@ -1,6 +1,9 @@
-﻿using FoodDelieveryManagementAPI.Models;
+﻿using FoodDelieveryManagementAPI.Business.Interfaces;
+using FoodDelieveryManagementAPI.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace FoodDelieveryManagementAPI.Controllers
@@ -9,35 +12,25 @@ namespace FoodDelieveryManagementAPI.Controllers
     [ApiController]
     public class AdministrationController : ControllerBase
     {
-        private readonly RoleManager<IdentityRole> _roleManager;
-        public AdministrationController(RoleManager<IdentityRole> roleManager)
+        private readonly IAdministrationBusiness _administrationBusiness;
+        public AdministrationController(IAdministrationBusiness administrationBusiness)
         {
-            _roleManager = roleManager;
+            _administrationBusiness = administrationBusiness;
         }
 
         [HttpPost("createrole")]
         public async Task<IActionResult> CreateRole([FromBody] Usertype role)
         {
-            if (ModelState.IsValid)
+            try
             {
-                IdentityRole identityRole = new IdentityRole
-                {
-                    Name = role.RoleName
-                };
-                IdentityResult result = await _roleManager.CreateAsync(identityRole);
-
-                if (result.Succeeded)
-                {
-                    return Ok("UserRole added successfully..");
-                }
-
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError("", error.Description);
-                }
+                await _administrationBusiness.CreateRole(role);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
-            return BadRequest(ModelState);
+            return Ok("User Role Added Successfully.");
         }
     }
 }

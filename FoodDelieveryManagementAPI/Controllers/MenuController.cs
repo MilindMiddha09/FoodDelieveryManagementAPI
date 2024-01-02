@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNet.Identity;
 using FoodDelieveryManagementAPI.Business.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using System;
 
 namespace FoodDelieveryManagementAPI.Controllers
 {
@@ -20,22 +22,22 @@ namespace FoodDelieveryManagementAPI.Controllers
         
         [Route("/api/restaurant/updatemenu")]
         [HttpPost]
-        
+        [Authorize(Roles = "Restaurant")]
         public IActionResult UpdateMenu([FromBody] MenuProduct product)
-        {
-            if(!ModelState.IsValid) { 
-                return BadRequest(ModelState);
-            }
-            
+        {   
             var userId=User.Identity.GetUserId();
 
             try
             {
                 _menuProductBusiness.UpdateMenu(product, userId);
             }
-            catch
+            catch(ArgumentException)
             {
                 return BadRequest("Log in first to update menu");
+            }
+            catch(Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
             }
             return StatusCode(StatusCodes.Status201Created);
         }

@@ -4,6 +4,7 @@ using FoodDelieveryManagementAPI.Enum;
 using FoodDelieveryManagementAPI.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.JsonPatch;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,7 +29,7 @@ namespace FoodDelieveryManagementAPI.Business
             return _dataRepo.GetAllRestaurants();
         }
 
-        public async Task<bool> DeleteRestaurant(int id)
+        public async Task DeleteRestaurant(int id)
         {
             var reqRestaurant = _dataRepo.GetAllRestaurants().FirstOrDefault(restaurant => restaurant.ID == id);
 
@@ -39,19 +40,25 @@ namespace FoodDelieveryManagementAPI.Business
 
                 _dataRepo.DeleteRestaurant(reqRestaurant);
                 await _userManager.DeleteAsync(identityRestaurant);
-                return true;
+                return;
             }
 
-            return false;
+            throw new ArgumentException();
         }
 
-        public async Task<bool> Register(Register registerDetails, string role)
+        public async Task Register(RegisterDetails registerDetails, string role)
         {
             var identityUser = new IdentityUser
             {   
                 UserName = registerDetails.Email,
                 Email = registerDetails.Email
             };
+            var ifUserExists = await _userManager.FindByEmailAsync(identityUser.Email);
+
+            if (ifUserExists != null)
+            {
+                throw new ArgumentException("User Already Exists..");
+            }
 
             var result1 = await _userManager.CreateAsync(identityUser, registerDetails.Password);
             var result2 = await _userManager.AddToRoleAsync(identityUser, role);
@@ -61,15 +68,15 @@ namespace FoodDelieveryManagementAPI.Business
                 AppUser newUser = new AppUser { 
                     IdentityUserId = identityUser.Id,
                     Name = registerDetails.Name,
-                    UserRole = UserType.Restaurant,
+                    UserRole = UserRole.Restaurant,
                     Address = registerDetails.Address,
                     ContactNo = registerDetails.ContactNo,
                 };
                 _dataRepo.AddRestaurant(newUser);
 
-                return true;
+                return;
             }
-            return false;
+            throw new InvalidOperationException("Something Bad has Occured.");
         }
 
         public List<MenuProduct> GetRestaurantMenu(int id)

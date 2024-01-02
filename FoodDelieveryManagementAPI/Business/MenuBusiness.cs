@@ -1,6 +1,7 @@
 ﻿using FoodDelieveryManagementAPI.Business.Interfaces;
 using FoodDelieveryManagementAPI.DataRepositories.Interfaces;
 using FoodDelieveryManagementAPI.Models;
+using System;
 using System.Linq;
 
 namespace FoodDelieveryManagementAPI.Business
@@ -13,12 +14,16 @@ namespace FoodDelieveryManagementAPI.Business
             _dataRepo = dataRepo;
             _restaurantDataRepo = restaurantDataRepo;
         }
-        public bool UpdateMenu(MenuProduct product, string userId)
+        public void UpdateMenu(MenuProduct product, string userId)
         {
+            if(userId == null)
+            {
+                throw new ArgumentException();
+            }
             var Id = _restaurantDataRepo.GetAllRestaurants().FirstOrDefault(u => u.IdentityUserId.Equals(userId)).ID;
             product.RestaurantId = Id;
             _dataRepo.AddProduct(product);
-            return true;         
+            return;         
         }
     }
 }
