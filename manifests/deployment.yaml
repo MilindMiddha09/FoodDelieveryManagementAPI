@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-work
+  labels:
+    app: dev-work
+  namespace: namespace-workflow-1715938197376
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dev-work
+  template:
+    metadata:
+      labels:
+        app: dev-work
+    spec:
+      containers:
+        - name: dev-work
+          image: acrworkflow1715938197376.azurecr.io/image-workflow-1715938197376:latest
+          ports:
+            - containerPort: 80
